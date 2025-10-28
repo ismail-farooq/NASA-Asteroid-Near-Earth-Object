@@ -1,5 +1,7 @@
 # ☄️ NASA Near Earth Object (NEO) Data Analysis
 
+<h3 align="center">CS210 - Data Management for Data Science Project</h3>
+
 This project analyzes NASA's Near Earth Object (NEO) dataset to understand asteroid characteristics, orbital patterns, and potential hazards. The workflow includes data cleaning, normalization, feature selection, and preparation for further machine learning or statistical modeling.
 
 ---
