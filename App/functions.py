@@ -32,7 +32,7 @@ def save_asteroid_to_db(asteroid, hazardous):
     conn.close()
 
 # Load model
-model_folder = "NLP Model"
+model_folder = Path(__file__).parent.parent / 'ML Models' / 'NLP Model'
 
 model = GPT2LMHeadModel.from_pretrained(str(model_folder))
 tokenizer = GPT2Tokenizer.from_pretrained(str(model_folder))
