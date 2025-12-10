@@ -39,26 +39,21 @@ tokenizer = GPT2Tokenizer.from_pretrained(str(model_folder))
 
 def generate_report(asteroid):
     prompt = (
-        f"Write a concise scientific report for the following Near-Earth Object (NEO):\n\n"
-        f"Semi-Major Axis: {asteroid['Semi_Major_Axis']} AU\n"
-        f"Eccentricity: {asteroid['Eccentricity']}\n"
-        f"Inclination: {asteroid['Inclination']} degrees\n"
-        f"Miss Distance: {asteroid['Miss_Dist_Kilometers']} km\n"
-        f"Absolute Magnitude: {asteroid['Absolute_Magnitude']}\n"
-        f"Estimated Diameter: {asteroid['Est_Dia_In_Km_Min']} - {asteroid['Est_Dia_In_Km_Max']} km\n"
-        f"Relative Velocity: {asteroid['Relative_Velocity_Km_Per_Hr']} km/hr\n"
-        f"Hazardous: {'Yes' if asteroid['Hazardous'] else 'No'}\n\n"
-        "Use the following sections: Overview, Orbital Characteristics, Physical Characteristics, Hazard Assessment, Summary.\n"
-        "Write only about this asteroid, do not mention the PDF, NASA report, or appendices.\n"
-        "Use complete sentences and scientific units."
+        f"NEO report:\n"
+        f"Semi-Major Axis: {asteroid['Semi_Major_Axis']} AU, "
+        f"Eccentricity: {asteroid['Eccentricity']}, "
+        f"Inclination: {asteroid['Inclination']} degrees, "
+        f"Close Approach Distance: {asteroid['Miss_Dist_Kilometers']} km, "
+        f"Hazardous: {asteroid['Hazardous']}.\n\n"
+        "Scientific Summary:"
     )
+
     inputs = tokenizer.encode(prompt, return_tensors="pt")
     output = model.generate(
         inputs,
-        max_length=512,
+        max_length=250,
         temperature=0.7,
-        no_repeat_ngram_size=4,
-        pad_token_id=tokenizer.eos_token_id
+        no_repeat_ngram_size=3
     )
     return tokenizer.decode(output[0], skip_special_tokens=True)
 

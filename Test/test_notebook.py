@@ -5,7 +5,7 @@ from pathlib import Path
 
 CWD = Path(__file__).parent / '..'
 
-MODEL_DIR = CWD / 'Model'
+MODEL_DIR = CWD / 'ML Models'
 
 nasa_csv = MODEL_DIR / 'hazard_model.pkl'
 
