@@ -2,11 +2,11 @@
   "version": 2,
   "builds": [
     {
-      "src": "Flask App/app.py",
+      "src": "App/app.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "Flask App/app.py" }
+    { "src": "/(.*)", "dest": "App/app.py" }
   ]
 }
