@@ -57,6 +57,55 @@ This project analyzes NASA's Near Earth Object (NEO) dataset to understand aster
 
 ---
 
+## 🧠 Project Structure
+.env
+.gitattributes
+.gitignore
+README.md
+requirements.txt
+push.txt
+LICENSE
+
+Database/
+├── asteroids.db
+└── model.py
+
+Datasets/
+├── European_Space_Agency_NEOs_Scraped_Data.csv
+├── European_Space_Agency_NEO_Designations.csv
+├── NASA_NEO_Dataset.csv
+├── NASA_NEO_Data_API.csv
+├── NLP/
+│   ├── asteroids_wiki.txt
+│   └── asteroids_wiki_cleaned.txt
+└── Processed Datasets/
+    └── NASA+EuropeanSpaceAgency_NEO_Data_Cleaned.csv
+
+ML Models/
+├── hazard_model.pkl
+├── scaler.pkl
+└── NLP Model/
+
+Flask App/
+├── app.py
+├── functions.py
+├── static/
+└── templates/
+
+MAIN Notebooks/
+├── CS210main.ipynb
+├── CS210_k_means_clustering.ipynb
+├── CS210_nlp.ipynb
+├── Secondary_Datasource_(SCRAPED).ipynb
+└── Tertiary_Datasource_(API).ipynb
+
+Extra Notebooks/
+├── Orbit_Visualizer.ipynb
+└── Test_Random_Data.ipynb
+
+Test/
+└── test_notebook.py
+
 
 
 ## ✅ How to Use 
