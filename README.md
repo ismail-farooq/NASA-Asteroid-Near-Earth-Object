@@ -87,7 +87,7 @@ ML Models/
 ├── scaler.pkl
 └── NLP Model/
 
-Flask App/
+App/
 ├── app.py
 ├── functions.py
 ├── static/
