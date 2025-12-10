@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar System</title>
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            font-family: Arial, sans-serif;
+        }
+        #gui-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        #planetInfo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            max-width: 400px;
+            backdrop-filter: blur(10px);
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="gui-container"></div>
+    
+    <div id="planetInfo">
+        <button class="close-btn" onclick="closeInfo()">×</button>
+        <h2 id="planetName"></h2>
+        <p><strong>Radius:</strong> <span id="planetRadius"></span></p>
+        <p><strong>Axial Tilt:</strong> <span id="planetTilt"></span></p>
+        <p><strong>Rotation Period:</strong> <span id="planetRotation"></span></p>
+        <p><strong>Orbital Period:</strong> <span id="planetOrbit"></span></p>
+        <p><strong>Distance from Sun:</strong> <span id="planetDistance"></span></p>
+        <p><strong>Moons:</strong> <span id="planetMoons"></span></p>
+        <p id="planetDescription"></p>
+    </div>
+
+    <!-- Three.js from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.7/build/dat.gui.min.js"></script>
+    
+    <script>
+        // Define static URL for Flask
+        const STATIC_URL = "{{ url_for('static', filename='') }}";
+    </script>
+    
+    <!-- Load Three.js components first -->
+    <script type="module">
+        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/controls/OrbitControls.js';
+        import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/loaders/GLTFLoader.js';
+        import { EffectComposer } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/postprocessing/UnrealBloomPass.js';
+        import { OutlinePass } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/postprocessing/OutlinePass.js';
+        
+        // Make them globally available
+        window.OrbitControls = OrbitControls;
+        window.GLTFLoader = GLTFLoader;
+        window.EffectComposer = EffectComposer;
+        window.RenderPass = RenderPass;
+        window.UnrealBloomPass = UnrealBloomPass;
+        window.OutlinePass = OutlinePass;
+        
+        // Now load the main script
+        // const script = document.createElement('script');
+        // script.src = "{{ url_for('static', filename='js/solar-system.js') }}";
+        // document.body.appendChild(script);
+    </script>
+    <script type="module" src="{{ url_for('static', filename='js/solar-system.js') }}"></script>
+</body>
+</html>

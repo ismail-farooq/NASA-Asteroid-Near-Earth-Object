@@ -1,0 +1,6 @@
+git init
+git add .
+git branch -M main
+git remote add origin git@github.com:ismail-farooq/NASA-Asteroid-Near-Earth-Object.git
+git commit -m "commit message"
+git push -u origin main

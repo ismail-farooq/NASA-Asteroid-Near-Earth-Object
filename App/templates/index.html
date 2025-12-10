@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Asteroid Hazard Prediction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .container {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .hazardous {
+            color: red;
+            font-weight: bold;
+        }
+
+        .safe {
+            color: green;
+            font-weight: bold;
+        }
+
+        .button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .button:hover {
+            background: #0056b3;
+        }
+
+        .button.secondary {
+            background: #6c757d;
+        }
+
+        .button.secondary:hover {
+            background: #545b62;
+        }
+
+        .container.report {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+            font-family: "Courier New", monospace;
+        }
+    </style>
+    <style>
+        #loader {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #007bff;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+    <div id="loader" style="display:none;">
+        <div class="spinner"></div>
+    </div>
+
+    <h1>Asteroid Hazard Prediction</h1>
+
+    <form method="POST">
+        <button type="submit" class="button">Generate Random Asteroid</button>
+    </form>
+
+    {% if submitted %}
+    <div class="container">
+        <h2>Generated Asteroid</h2>
+        {% if asteroid %}
+        <p><strong>Hazardous:</strong>
+            <span class="{% if prediction %}hazardous{% else %}safe{% endif %}">
+                {{ "Yes" if prediction else "No" }}
+            </span>
+        </p>
+
+        <p>
+            <strong>Confidence:</strong><br>
+            Safe: {{ (confidence[0] * 100) | round(2) }}% <br>
+            Hazardous: {{ (confidence[1] * 100) | round(2) }}%
+        </p>
+
+        {% if report %}
+        <div class="container report">
+            <h2>Generated NEO Report using NLP</h2>
+            <p style="white-space: pre-wrap;">{{ report }}</p>
+        </div>
+        {% endif %}
+
+        {% if asteroid_json %}
+        <a href="/orbit" target="_blank" class="button">View Asteroid Orbit</a>
+        <button class="button" onclick="copyAsteroid()">Copy Asteroid Values JSON</button>
+        {% endif %}
+        {% endif %}
+    </div>
+
+
+    {% endif %}
+
+    <script>
+        function copyAsteroid() {
+            // Parse and reformat JSON before copying
+            const asteroid = {{ asteroid_json | safe
+        }};
+        const formatted = JSON.stringify(asteroid, null, 4);
+        navigator.clipboard.writeText(formatted)
+            .then(() => alert("Asteroid data copied in JSON format"))
+            .catch(err => alert("Failed to copy: " + err));
+}
+    </script>
+    <script>
+        document.querySelector("form").addEventListener("submit", function () {
+            document.getElementById("loader").style.display = "flex";
+        });
+    </script>
+
+
+</body>
+
+</html>
