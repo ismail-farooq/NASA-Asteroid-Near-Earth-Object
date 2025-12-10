@@ -58,6 +58,7 @@ This project analyzes NASA's Near Earth Object (NEO) dataset to understand aster
 ---
 
 ## 🧠 Project Structure
+```bash
 .env
 .gitattributes
 .gitignore
@@ -105,7 +106,7 @@ Extra Notebooks/
 
 Test/
 └── test_notebook.py
-
+```
 
 ## ✅ How to Use 
 
