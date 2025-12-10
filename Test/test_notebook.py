@@ -33,3 +33,5 @@ def test_scaler_consistency():
     arr = np.random.rand(5, 19)
     scaled = scaler.transform(arr)
     assert scaled.shape == (5, 19), "Scaler output shape mismatch"
+
+# python -m pytest Test/test_notebook.py
