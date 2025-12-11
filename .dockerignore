@@ -1,0 +1,28 @@
+# Python cache
+__pycache__/
+*/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environments
+.venv/
+venv/
+
+# Git stuff
+.git/
+.gitignore
+
+# pytest cache
+.pytest_cache/
+
+# temp / local files
+push.txt
+.env
+.DS_Store
+
+logs/
+*.ipynb
+*.csv
+*.h5
+*.db

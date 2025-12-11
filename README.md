@@ -138,6 +138,11 @@ pip install -r requirements.txt
 * Trained ML models are in `ML Models`
 * Fine-tuned GPT-2 NLP model is in `ML Models/NLP Model`
 
+### Running predefined tests
+```bash
+python -m pytest Test/test_notebook.py
+```
+
 ### Run the Flask Web App
 
 ```bash
