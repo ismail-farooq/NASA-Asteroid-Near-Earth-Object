@@ -9,6 +9,7 @@ import random
 from pathlib import Path
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 import torch
+import os
 
 
 app = Flask(__name__)
@@ -113,5 +114,6 @@ def api_asteroid():
     
     return jsonify(asteroid)
 
-#if __name__ == "__main__":
-#    app.run(debug=True)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
