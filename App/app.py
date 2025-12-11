@@ -57,8 +57,8 @@ def save_asteroid_to_db(asteroid, hazardous):
 # Load model
 model_folder = Path(__file__).parent.parent / 'ML Models' / 'NLP Model'
 
-model = GPT2LMHeadModel.from_pretrained(str(model_folder))
-tokenizer = GPT2Tokenizer.from_pretrained(str(model_folder))
+model = GPT2LMHeadModel.from_pretrained("gpt2")
+tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
 def generate_report(asteroid):
     prompt = (
