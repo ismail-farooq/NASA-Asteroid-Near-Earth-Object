@@ -57,8 +57,8 @@ def save_asteroid_to_db(asteroid, hazardous):
 # Load model
 model_folder = Path(__file__).parent.parent / 'ML Models' / 'NLP Model'
 
-model = GPT2LMHeadModel.from_pretrained("gpt2")
-tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+model = GPT2LMHeadModel.from_pretrained(str(model_folder))
+tokenizer = GPT2Tokenizer.from_pretrained(str(model_folder))
 
 def generate_report(asteroid):
     prompt = (
@@ -115,5 +115,5 @@ def api_asteroid():
     return jsonify(asteroid)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
+

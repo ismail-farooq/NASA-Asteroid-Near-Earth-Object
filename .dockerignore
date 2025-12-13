@@ -25,4 +25,3 @@ logs/
 *.ipynb
 *.csv
 *.h5
-*.db
