@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify, render_template, session
-import sqlite3
 import pandas as pd
 import joblib
 from pathlib import Path
@@ -37,32 +36,46 @@ scaler_path = load_model2()
 hazard_model = joblib.load(hazard_path)
 scaler = joblib.load(scaler_path)
 
-DB_PATH1 = Path(__file__).parent.parent / 'Database' 
-DB_PATH = DB_PATH1 / 'asteroids.db'
+# DB_PATH1 = Path(__file__).parent.parent / 'Database' 
+# DB_PATH = DB_PATH1 / 'asteroids.db'
 
 
 def load_feature_ranges():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('SELECT feature_name, min_value, max_value FROM feature_ranges')
-    rows = c.fetchall()
-    conn.close()
-    return {row[0]: (row[1], row[2]) for row in rows}
-
+    return {
+        "Absolute_Magnitude": [13.92, 13.92],
+        "Est_Dia_In_Km_Min": [0.0048367649, 0.0048367649],
+        "Est_Dia_In_Km_Max": [0.0108153351, 0.0108153351],
+        "Relative_Velocity_Km_Per_Hr": [943.3321928485, 943.3321928485],
+        "Miss_Dist_Kilometers": [0.00166, 0.00166],
+        "Minimum_Orbit_Intersection": [0.00000206111, 0.00000206111],
+        "Jupiter_Tisserand_Invariant": [2.4, 2.4],
+        "Epoch_Osculation": [2453496.5, 2453496.5],
+        "Eccentricity": [0.00752235509936797, 0.00752235509936797],
+        "Semi_Major_Axis": [0.7321056673857965, 0.7321056673857965],
+        "Inclination": [0.01451294322958202, 0.01451294322958202],
+        "Asc_Node_Longitude": [0.00194067415759618, 0.00194067415759618],
+        "Orbital_Period": [228.8016121087175, 228.8016121087175],
+        "Perihelion_Distance": [0.08074429595890999, 0.08074429595890999],
+        "Perihelion_Arg": [0.0069176245736902, 0.0069176245736902],
+        "Aphelion_Dist": [0.8940436043120773, 0.8940436043120773],
+        "Perihelion_Time": [2453535.0605106894, 2453535.0605106894],
+        "Mean_Anomaly": [0.0031914911023824, 0.0031914911023824],
+        "Mean_Motion": [0.1638053948608621, 0.1638053948608621]
+    }
 ranges = load_feature_ranges()
 
 def generate_random_asteroid(ranges):
     return {col: round(random.uniform(min_val, max_val), 5) for col, (min_val, max_val) in ranges.items()}
 
-def save_asteroid_to_db(asteroid, hazardous):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    columns = ', '.join(asteroid.keys()) + ', Hazardous'
-    placeholders = ', '.join(['?'] * (len(asteroid) + 1))
-    values = list(asteroid.values()) + [hazardous]
-    c.execute(f'INSERT INTO asteroids ({columns}) VALUES ({placeholders})', values)
-    conn.commit()
-    conn.close()
+# def save_asteroid_to_db(asteroid, hazardous):
+#     conn = sqlite3.connect(DB_PATH)
+#     c = conn.cursor()
+#     columns = ', '.join(asteroid.keys()) + ', Hazardous'
+#     placeholders = ', '.join(['?'] * (len(asteroid) + 1))
+#     values = list(asteroid.values()) + [hazardous]
+#     c.execute(f'INSERT INTO asteroids ({columns}) VALUES ({placeholders})', values)
+#     conn.commit()
+#     conn.close()
 
 # Load model
 #model = GPT2LMHeadModel.from_pretrained(str(model_folder))
@@ -105,7 +118,7 @@ def index():
         asteroid_json = json.dumps(asteroid)
         session['current_asteroid'] = asteroid
 
-        save_asteroid_to_db(asteroid, prediction)
+        # save_asteroid_to_db(asteroid, prediction)
         #report = generate_report(asteroid)
         return render_template("index.html", asteroid=asteroid, prediction=prediction, asteroid_json=asteroid_json, confidence=confidence, submitted=True)
 
@@ -176,7 +189,7 @@ def api_generate():
     asteroid['Hazardous'] = prediction
     session['current_asteroid'] = asteroid
  
-    save_asteroid_to_db(asteroid, prediction)
+    # save_asteroid_to_db(asteroid, prediction)
     #report = generate_report(asteroid)
  
     return jsonify({
