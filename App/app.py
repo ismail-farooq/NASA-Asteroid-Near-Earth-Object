@@ -5,8 +5,6 @@ import joblib
 from pathlib import Path
 import random
 import json
-import random
-from pathlib import Path
 import os
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "RAG"))
@@ -16,21 +14,25 @@ from huggingface_hub import hf_hub_download
 app = Flask(__name__)
 app.secret_key = 'KEY' 
 
+os.environ["HF_HOME"] = "/tmp/hf"
+os.environ["HUGGINGFACE_HUB_CACHE"] = "/tmp/hf"
+os.environ["TRANSFORMERS_CACHE"] = "/tmp/hf"
+def load_model1():
+    return hf_hub_download(
+        repo_id="HollowWinter429/hazard_model",
+        filename="hazard_model.pkl",
+        cache_dir="/tmp/hf"
+    )
 
-model_path = hf_hub_download(
-    repo_id="HollowWinter429/hazard_model",
-    filename="hazard_model.pkl"
-)
+def load_model2():
+    return hf_hub_download(
+        repo_id="HollowWinter429/hazard_model",
+        filename="scaler.pkl",
+        cache_dir="/tmp/hf"
+    )
 
-scaler_path = hf_hub_download(
-    repo_id="HollowWinter429/hazard_model",
-    filename="scaler.pkl"
-)   
-
-MODEL_REPO = "HollowWinter429/hazard_model"
-
-hazard_path = hf_hub_download(MODEL_REPO, "hazard_model.pkl")
-scaler_path = hf_hub_download(MODEL_REPO, "scaler.pkl")
+hazard_path = load_model1()
+scaler_path = load_model2()
 
 hazard_model = joblib.load(hazard_path)
 scaler = joblib.load(scaler_path)
@@ -185,5 +187,4 @@ def api_generate():
  
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True)
-
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
