@@ -1,0 +1,13 @@
+Datasets
+Database
+MAIN Notebooks
+Extra Notebooks
+Test
+*.ipynb
+*.db
+ML Models
+*.pkl
+*.csv
+__pycache__
+.venv
+.env

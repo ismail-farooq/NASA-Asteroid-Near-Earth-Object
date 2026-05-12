@@ -11,6 +11,7 @@ import os
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "RAG"))
 from rag_pipeline import get_pipeline
+from huggingface_hub import hf_hub_download
 
 app = Flask(__name__)
 app.secret_key = 'KEY' 
@@ -19,11 +20,24 @@ app.secret_key = 'KEY'
 MODEL_PATH = Path(__file__).parent.parent / 'ML Models' 
 DB_PATH1 = Path(__file__).parent.parent / 'Database' 
 
-HAZARD_MODEL = MODEL_PATH / 'hazard_model.pkl'
-SCALER_PATH = MODEL_PATH / 'scaler.pkl'
 
-hazard_model = joblib.load(HAZARD_MODEL)
-scaler = joblib.load(SCALER_PATH)
+model_path = hf_hub_download(
+    repo_id="HollowWinter429/hazard_model",
+    filename="hazard_model.pkl"
+)
+
+scaler_path = hf_hub_download(
+    repo_id="HollowWinter429/hazard_model",
+    filename="scaler.pkl"
+)   
+
+MODEL_REPO = "HollowWinter429/hazard_model"
+
+hazard_path = hf_hub_download(MODEL_REPO, "hazard_model.pkl")
+scaler_path = hf_hub_download(MODEL_REPO, "scaler.pkl")
+
+hazard_model = joblib.load(hazard_path)
+scaler = joblib.load(scaler_path)
 
 DB_PATH = DB_PATH1 / 'asteroids.db'
 
