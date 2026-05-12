@@ -16,6 +16,12 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # the application crashes without emitting any logs due to buffering.
 ENV PYTHONUNBUFFERED=1
 
+ENV HF_HOME=/tmp/hf
+ENV HUGGINGFACE_HUB_CACHE=/tmp/hf
+ENV TRANSFORMERS_CACHE=/tmp/hf
+ENV SENTENCE_TRANSFORMERS_HOME=/tmp/hf
+ENV TORCH_HOME=/tmp/torch
+
 WORKDIR /app
 
 # Create a non-privileged user that the app will run under.
@@ -44,7 +50,7 @@ RUN chown -R 10001:10001 /app
 USER appuser
 
 # Expose the port that the application listens on.
-EXPOSE 8000
+EXPOSE 10000
 
 # Run the application.
 CMD python App/app.py
