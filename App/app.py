@@ -10,7 +10,9 @@ from pathlib import Path
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 import torch
 import os
-
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent / "RAG"))
+from rag_pipeline import get_pipeline
 
 app = Flask(__name__)
 app.secret_key = 'KEY' 
@@ -60,25 +62,25 @@ model_folder = Path(__file__).parent.parent / 'ML Models' / 'NLP Model'
 model = GPT2LMHeadModel.from_pretrained(str(model_folder))
 tokenizer = GPT2Tokenizer.from_pretrained(str(model_folder))
 
-def generate_report(asteroid):
-    prompt = (
-        f"NEO report:\n"
-        f"Semi-Major Axis: {asteroid['Semi_Major_Axis']} AU, "
-        f"Eccentricity: {asteroid['Eccentricity']}, "
-        f"Inclination: {asteroid['Inclination']} degrees, "
-        f"Close Approach Distance: {asteroid['Miss_Dist_Kilometers']} km, "
-        f"Hazardous: {asteroid['Hazardous']}.\n\n"
-        "Scientific Summary:"
-    )
+# def generate_report(asteroid):
+#     prompt = (
+#         f"NEO report:\n"
+#         f"Semi-Major Axis: {asteroid['Semi_Major_Axis']} AU, "
+#         f"Eccentricity: {asteroid['Eccentricity']}, "
+#         f"Inclination: {asteroid['Inclination']} degrees, "
+#         f"Close Approach Distance: {asteroid['Miss_Dist_Kilometers']} km, "
+#         f"Hazardous: {asteroid['Hazardous']}.\n\n"
+#         "Scientific Summary:"
+#     )
 
-    inputs = tokenizer.encode(prompt, return_tensors="pt")
-    output = model.generate(
-        inputs,
-        max_length=250,
-        temperature=0.7,
-        no_repeat_ngram_size=3
-    )
-    return tokenizer.decode(output[0], skip_special_tokens=True)
+#     inputs = tokenizer.encode(prompt, return_tensors="pt")
+#     output = model.generate(
+#         inputs,
+#         max_length=250,
+#         temperature=0.7,
+#         no_repeat_ngram_size=3
+#     )
+#     return tokenizer.decode(output[0], skip_special_tokens=True)
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -98,8 +100,8 @@ def index():
         session['current_asteroid'] = asteroid
 
         save_asteroid_to_db(asteroid, prediction)
-        report = generate_report(asteroid)
-        return render_template("index.html", asteroid=asteroid, prediction=prediction, asteroid_json=asteroid_json, confidence=confidence, report=report, submitted=True)
+        #report = generate_report(asteroid)
+        return render_template("index.html", asteroid=asteroid, prediction=prediction, asteroid_json=asteroid_json, confidence=confidence, submitted=True)
 
     return render_template("index.html", submitted=False)
 
@@ -113,6 +115,70 @@ def api_asteroid():
         asteroid = session['current_asteroid']
     
     return jsonify(asteroid)
+
+@app.route("/chat")
+def chat():
+    """Renders the RAG chat UI."""
+    return render_template("chat.html")
+ 
+ 
+# ── Route: RAG API endpoint (called by chat.html via fetch) ───────────────────
+@app.route("/api/rag", methods=["POST"])
+def rag_query():
+    """
+    POST JSON: { "question": str }
+    Optionally injects the current session asteroid as context.
+ 
+    Returns JSON:
+    {
+      "answer":  str,
+      "sources": [{ "chunk_index": int, "distance": float, "preview": str }],
+      "model":   str
+    }
+    """
+    data = request.get_json(force=True)
+    question = (data.get("question") or "").strip()
+ 
+    if not question:
+        return jsonify({"error": "No question provided."}), 400
+ 
+    # Pull current asteroid from session if one exists
+    asteroid_context = session.get("current_asteroid")
+ 
+    try:
+        pipeline = get_pipeline()
+        result   = pipeline.ask(question, asteroid_context=asteroid_context)
+        return jsonify(result)
+    except FileNotFoundError as e:
+        return jsonify({"error": str(e)}), 503
+    except Exception as e:
+        return jsonify({"error": f"RAG error: {e}"}), 500
+
+@app.route("/api/generate", methods=["POST"])
+def api_generate():
+    """
+    Returns JSON with asteroid data, prediction, confidence, and report.
+    Called by the frontend JS instead of POSTing to '/'.
+    """
+    ranges = load_feature_ranges()
+    asteroid = generate_random_asteroid(ranges)
+    df = pd.DataFrame([asteroid])
+    df_scaled = scaler.transform(df)
+    prediction = int(hazard_model.predict(df_scaled)[0])
+    confidence = hazard_model.predict_proba(df_scaled)[0].tolist()
+ 
+    asteroid['Hazardous'] = prediction
+    session['current_asteroid'] = asteroid
+ 
+    save_asteroid_to_db(asteroid, prediction)
+    #report = generate_report(asteroid)
+ 
+    return jsonify({
+        **asteroid,
+        "prediction": prediction,
+        "confidence": confidence[prediction],
+    })
+ 
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)

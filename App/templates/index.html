@@ -1,164 +1,1037 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <title>Asteroid Hazard Prediction</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NEO Analysis Terminal | 3D Orbit Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 
-        .container {
-            background: #f5f5f5;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-        }
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .hazardous {
-            color: red;
-            font-weight: bold;
-        }
+    :root {
+      --bg:         #080a0e;
+      --panel:      #0c0f16;
+      --panel2:     #101520;
+      --border:     #1c2333;
+      --border2:    #263044;
+      --amber:      #e8a020;
+      --amber-dim:  #7a4f08;
+      --amber-glow: rgba(232,160,32,0.12);
+      --green:      #2de08a;
+      --green-dim:  #0d4028;
+      --red:        #e84040;
+      --red-dim:    #4a1010;
+      --blue:       #4488ff;
+      --text:       #a8b8cc;
+      --text-bright:#d8e8f8;
+      --text-dim:   #3a4a5e;
+      --radius:     6px;
+      --mono:       'IBM Plex Mono', monospace;
+      --serif:      'DM Serif Display', serif;
+    }
 
-        .safe {
-            color: green;
-            font-weight: bold;
-        }
+    html { height: 100%; }
 
-        .button {
-            background: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 10px 5px;
-            text-decoration: none;
-            display: inline-block;
-        }
+    body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.6;
+      background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.15) 2px,
+        rgba(0,0,0,0.15) 4px
+      );
+    }
 
-        .button:hover {
-            background: #0056b3;
-        }
+    /* ── Top bar ───────────────────────────────────────────────────────────── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,10,14,0.95);
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(8px);
+    }
 
-        .button.secondary {
-            background: #6c757d;
-        }
+    .topbar-left {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+    }
 
-        .button.secondary:hover {
-            background: #545b62;
-        }
+    .wordmark {
+      font-family: var(--serif);
+      font-size: 1.15rem;
+      color: var(--text-bright);
+      letter-spacing: 0.01em;
+    }
 
-        .container.report {
-            background: #fff3cd;
-            border-left: 5px solid #ffc107;
-            padding: 15px;
-            margin-top: 20px;
-            border-radius: 8px;
-            font-family: "Courier New", monospace;
-        }
-    </style>
-    <style>
-        #loader {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 9999;
-            background: rgba(255, 255, 255, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+    .wordmark em {
+      font-style: italic;
+      color: var(--amber);
+    }
 
-        .spinner {
-            border: 8px solid #f3f3f3;
-            border-top: 8px solid #007bff;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 1s linear infinite;
-        }
+    .tag {
+      font-size: 0.6rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
 
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
 
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-    </style>
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+    }
 
+    .dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: blink 3s infinite;
+    }
+
+    .dot.amber { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+    .dot.off   { background: var(--text-dim); box-shadow: none; animation: none; }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    #clock {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+    }
+
+    /* ── Main grid ─────────────────────────────────────────────────────────── */
+    .workspace {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto 1fr;
+      gap: 1px;
+      height: calc(100vh - 49px);
+      background: var(--border);
+    }
+
+    /* ── Panel shared styles ───────────────────────────────────────────────── */
+    .panel {
+      background: var(--panel);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel2);
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .panel-title .icon {
+      font-size: 0.8rem;
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .panel-body::-webkit-scrollbar { width: 3px; }
+    .panel-body::-webkit-scrollbar-track { background: transparent; }
+    .panel-body::-webkit-scrollbar-thumb { background: var(--border2); }
+
+    /* ── NEO Generator panel (top-left) ────────────────────────────────────── */
+    #panel-generator { grid-column: 1; grid-row: 1 / 3; }
+
+    .generate-btn {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid var(--amber-dim);
+      border-radius: var(--radius);
+      background: var(--amber-glow);
+      color: var(--amber);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all .2s;
+      margin-bottom: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .generate-btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(232,160,32,0.1), transparent);
+      transform: translateX(-100%);
+      transition: transform .5s;
+    }
+
+    .generate-btn:hover::before { transform: translateX(100%); }
+    .generate-btn:hover {
+      border-color: var(--amber);
+      box-shadow: 0 0 20px rgba(232,160,32,0.15);
+    }
+    .generate-btn:active { transform: scale(.99); }
+    .generate-btn:disabled {
+      opacity: .4; cursor: not-allowed;
+    }
+    .generate-btn:disabled::before { display: none; }
+
+    /* Orbit Button (new) */
+    .orbit-btn-container {
+      margin-bottom: 20px;
+      transition: all 0.2s ease;
+    }
+    .orbit-action-btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(68,136,255,0.1) 0%, rgba(40,80,180,0.05) 100%);
+      border: 1px solid var(--blue);
+      color: var(--blue);
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all .25s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      backdrop-filter: blur(2px);
+    }
+    .orbit-action-btn:hover {
+      background: rgba(68,136,255,0.2);
+      box-shadow: 0 0 14px rgba(68,136,255,0.2);
+      border-color: var(--blue);
+      transform: translateY(-1px);
+    }
+    .orbit-action-btn:active { transform: translateY(1px); }
+    .orbit-action-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--blue);
+      stroke-width: 2;
+    }
+
+    /* Hazard badge */
+    .hazard-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      border: 1px solid;
+      animation: fadeSlide .3s ease both;
+    }
+
+    .hazard-badge.hazardous {
+      background: rgba(232,64,64,0.07);
+      border-color: rgba(232,64,64,0.3);
+    }
+
+    .hazard-badge.safe {
+      background: rgba(45,224,138,0.06);
+      border-color: rgba(45,224,138,0.25);
+    }
+
+    .badge-icon { font-size: 1.2rem; }
+
+    .badge-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .badge-value {
+      font-family: var(--serif);
+      font-size: 1rem;
+    }
+
+    .hazardous .badge-value { color: var(--red); }
+    .safe .badge-value      { color: var(--green); }
+
+    .confidence-bar {
+      height: 3px;
+      border-radius: 2px;
+      background: var(--border);
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width .6s cubic-bezier(.4,0,.2,1);
+    }
+
+    .hazardous .confidence-fill { background: var(--red); }
+    .safe .confidence-fill      { background: var(--green); }
+
+    /* Data grid */
+    .data-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .data-cell {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      animation: fadeSlide .3s ease both;
+    }
+
+    .cell-label {
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+
+    .cell-value {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-bright);
+    }
+
+    .cell-unit {
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      margin-left: 3px;
+    }
+
+    /* Report block */
+    .report-block {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-left: 2px solid var(--amber-dim);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      font-size: 0.72rem;
+      line-height: 1.75;
+      color: var(--text);
+      animation: fadeSlide .4s ease both;
+    }
+
+    .report-label {
+      font-size: 0.58rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--amber-dim);
+      margin-bottom: 8px;
+    }
+
+    /* empty placeholder */
+    .empty-gen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 10px;
+      color: var(--text-dim);
+      text-align: center;
+    }
+
+    .empty-gen .glyph {
+      font-size: 2.5rem;
+      opacity: .3;
+      filter: grayscale(1);
+    }
+
+    .empty-gen p {
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      max-width: 200px;
+      line-height: 1.7;
+    }
+
+    /* ── RAG Chat panel (top-right, full height) ───────────────────────────── */
+    #panel-chat {
+      grid-column: 2;
+      grid-row: 1 / 3;
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    #messages::-webkit-scrollbar { width: 3px; }
+    #messages::-webkit-scrollbar-thumb { background: var(--border2); }
+
+    .msg {
+      display: flex;
+      gap: 9px;
+      animation: fadeSlide .2s ease both;
+    }
+
+    .msg.user { flex-direction: row-reverse; }
+
+    .avatar {
+      width: 26px; height: 26px;
+      border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+      font-weight: 600;
+    }
+
+    .msg.user .avatar {
+      background: var(--amber-glow);
+      border: 1px solid var(--amber-dim);
+      color: var(--amber);
+    }
+
+    .msg.bot .avatar {
+      background: var(--green-dim);
+      border: 1px solid rgba(45,224,138,0.2);
+      color: var(--green);
+    }
+
+    .bubble {
+      max-width: 80%;
+      padding: 10px 13px;
+      border-radius: var(--radius);
+      font-size: 0.72rem;
+      line-height: 1.75;
+    }
+
+    .msg.user .bubble {
+      background: var(--amber-glow);
+      border: 1px solid var(--amber-dim);
+      color: var(--amber);
+      border-bottom-right-radius: 2px;
+    }
+
+    .msg.bot .bubble {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-bottom-left-radius: 2px;
+    }
+
+    /* sources */
+    .src-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 8px;
+      padding: 2px 7px;
+      border-radius: 3px;
+      background: rgba(68,136,255,0.06);
+      border: 1px solid rgba(68,136,255,0.15);
+      font-size: 0.58rem;
+      letter-spacing: 0.08em;
+      color: var(--blue);
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .src-toggle:hover { background: rgba(68,136,255,0.12); }
+
+    .src-list { display: none; margin-top: 6px; }
+    .src-list.open { display: block; }
+
+    .src-item {
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      padding: 3px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    /* typing */
+    .dots span {
+      display: inline-block;
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      margin-right: 3px;
+      animation: bounce .9s infinite;
+    }
+
+    .dots span:nth-child(2) { animation-delay: .15s; }
+    .dots span:nth-child(3) { animation-delay: .30s; }
+
+    @keyframes bounce {
+      0%,80%,100% { transform: translateY(0); }
+      40%          { transform: translateY(-4px); }
+    }
+
+    /* chat empty */
+    .chat-empty {
+      margin: auto;
+      text-align: center;
+      padding: 30px 20px;
+      color: var(--text-dim);
+    }
+
+    .chat-empty h3 {
+      font-family: var(--serif);
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .chat-empty p {
+      font-size: 0.65rem;
+      line-height: 1.7;
+      max-width: 240px;
+      margin: 0 auto 14px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .chip {
+      padding: 4px 10px;
+      border-radius: 3px;
+      border: 1px solid var(--border2);
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all .2s;
+      letter-spacing: 0.04em;
+    }
+
+    .chip:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: rgba(68,136,255,0.05);
+    }
+
+    /* input bar */
+    .chat-input {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--panel2);
+      flex-shrink: 0;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    #question {
+      flex: 1;
+      resize: none;
+      padding: 9px 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border2);
+      background: var(--panel);
+      color: var(--text-bright);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      line-height: 1.5;
+      min-height: 38px;
+      max-height: 100px;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    #question::placeholder { color: var(--text-dim); }
+    #question:focus { border-color: var(--border2); box-shadow: 0 0 0 2px rgba(68,136,255,0.08); }
+
+    #send-btn {
+      width: 38px; height: 38px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border2);
+      background: var(--panel);
+      color: var(--text-dim);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all .2s;
+    }
+
+    #send-btn:hover:not(:disabled) {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: rgba(68,136,255,0.06);
+    }
+
+    #send-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+    .input-hint {
+      font-size: 0.57rem;
+      color: var(--text-dim);
+      margin-top: 6px;
+      letter-spacing: 0.06em;
+    }
+
+    /* context pill */
+    #ctx-pill {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      margin-bottom: 10px;
+      border-radius: 3px;
+      border: 1px solid rgba(45,224,138,0.2);
+      background: rgba(45,224,138,0.04);
+      font-size: 0.6rem;
+      color: var(--green);
+      letter-spacing: 0.06em;
+    }
+
+    #ctx-pill.visible { display: flex; }
+
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid var(--border);
+      border-top-color: var(--amber);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(5px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    ::-webkit-scrollbar { width: 3px; height: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  </style>
 </head>
-
 <body>
-    <div id="loader" style="display:none;">
-        <div class="spinner"></div>
+
+<!-- Top bar -->
+<header class="topbar">
+  <div class="topbar-left">
+    <span class="wordmark">NEO <em>Analysis</em> Terminal</span>
+    <span class="tag">NASA · ESA Dataset · v2.1</span>
+  </div>
+  <div class="status-row">
+    <div class="status-pill"><div class="dot"></div> ML Model Online</div>
+    <div class="status-pill" id="rag-status"><div class="dot amber" id="rag-dot"></div> RAG Initializing</div>
+    <div id="clock"></div>
+  </div>
+</header>
+
+<!-- Workspace -->
+<div class="workspace">
+
+  <!-- Left: NEO Generator -->
+  <div class="panel" id="panel-generator">
+    <div class="panel-header">
+      <div class="panel-title">
+        <span class="icon">☄</span>
+        NEO Hazard Classifier
+      </div>
+      <div class="tag">Orbital · Physical · ML</div>
     </div>
+    <div class="panel-body" id="gen-body">
 
-    <h1>Asteroid Hazard Prediction</h1>
+      <button class="generate-btn" id="gen-btn" onclick="generateAsteroid()">
+        ⟳ &nbsp; Generate &amp; Classify NEO
+      </button>
 
-    <form method="POST">
-        <button type="submit" class="button">Generate Random Asteroid</button>
-    </form>
+      <!-- Dynamic container for Orbit Button (appears after generation) -->
+      <div id="orbit-btn-container" class="orbit-btn-container"></div>
 
-    {% if submitted %}
-    <div class="container">
-        <h2>Generated Asteroid</h2>
-        {% if asteroid %}
-        <p><strong>Hazardous:</strong>
-            <span class="{% if prediction %}hazardous{% else %}safe{% endif %}">
-                {{ "Yes" if prediction else "No" }}
-            </span>
-        </p>
-
-        <p>
-            <strong>Confidence:</strong><br>
-            Safe: {{ (confidence[0] * 100) | round(2) }}% <br>
-            Hazardous: {{ (confidence[1] * 100) | round(2) }}%
-        </p>
-
-        {% if report %}
-        <div class="container report">
-            <h2>Generated NEO Report using NLP</h2>
-            <p style="white-space: pre-wrap;">{{ report }}</p>
+      <div id="gen-content">
+        <div class="empty-gen" id="gen-empty">
+          <div class="glyph">🪐</div>
+          <p>Click to generate a random Near-Earth Object and run hazard classification.</p>
         </div>
-        {% endif %}
+      </div>
 
-        {% if asteroid_json %}
-        <a href="/orbit" target="_blank" class="button">View Asteroid Orbit</a>
-        <button class="button" onclick="copyAsteroid()">Copy Asteroid Values JSON</button>
-        {% endif %}
-        {% endif %}
+    </div>
+  </div>
+
+  <!-- Right: RAG Chat -->
+  <div class="panel" id="panel-chat" style="display:flex;flex-direction:column;">
+    <div class="panel-header">
+      <div class="panel-title">
+        <span class="icon">◈</span>
+        Knowledge Base — RAG Chat
+      </div>
+      <div class="tag">Llama 3.3 · ChromaDB</div>
     </div>
 
+    <div id="messages">
+      <div id="ctx-pill">
+        <div class="dot"></div>
+        <span id="ctx-text">Asteroid context loaded</span>
+      </div>
+      <div class="chat-empty" id="chat-empty">
+        <h3>Ask about asteroids</h3>
+        <p>Questions are answered using the asteroid knowledge base. Generate a NEO first to get orbit-specific answers.</p>
+        <div class="chips">
+          <div class="chip" onclick="chipSend(this)">What is a PHO?</div>
+          <div class="chip" onclick="chipSend(this)">Explain the Torino Scale</div>
+          <div class="chip" onclick="chipSend(this)">How is miss distance measured?</div>
+          <div class="chip" onclick="chipSend(this)">What causes eccentricity?</div>
+          <div class="chip" onclick="chipSend(this)">Tell me about DART mission</div>
+        </div>
+      </div>
+    </div>
 
-    {% endif %}
+    <div class="chat-input">
+      <div class="input-row">
+        <textarea id="question" rows="1" placeholder="Ask anything about near-earth objects…"></textarea>
+        <button id="send-btn" onclick="sendMessage()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+      <div class="input-hint">↵ send &nbsp;·&nbsp; shift+↵ newline &nbsp;·&nbsp; answers cite retrieved chunks</div>
+    </div>
+  </div>
 
-    <script>
-        function copyAsteroid() {
-            // Parse and reformat JSON before copying
-            const asteroid = {{ asteroid_json | safe
-        }};
-        const formatted = JSON.stringify(asteroid, null, 4);
-        navigator.clipboard.writeText(formatted)
-            .then(() => alert("Asteroid data copied in JSON format"))
-            .catch(err => alert("Failed to copy: " + err));
+</div><!-- /workspace -->
+
+<script>
+  // ── Clock update ──────────────────────────────────────────────────────────
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ── RAG status ping ───────────────────────────────────────────────────────
+  (async () => {
+    try {
+      const r = await fetch('/api/rag', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: 'ping' }),
+      });
+      const dot = document.getElementById('rag-dot');
+      const lbl = document.getElementById('rag-status');
+      if (r.ok) {
+        dot.className = 'dot';
+        lbl.childNodes[1].textContent = ' RAG Online';
+      } else {
+        dot.className = 'dot off';
+        lbl.childNodes[1].textContent = ' RAG Offline';
+      }
+    } catch {}
+  })();
+
+  // Auto-resize textarea
+  const questionEl = document.getElementById('question');
+  questionEl.addEventListener('input', () => {
+    questionEl.style.height = 'auto';
+    questionEl.style.height = Math.min(questionEl.scrollHeight, 100) + 'px';
+  });
+  questionEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+
+  // Current asteroid data store
+  let currentAsteroidData = null;
+  let hasAsteroid = false;
+
+  // Show Orbit Button with proper link to /orbit (POST endpoint or GET view)
+  // Requirement: link to /orbit. We'll open in same tab or new window? best new? keep consistent: Same tab for terminal style, but user can navigate.
+  // We'll open in same tab to simulate deep link, but it's a button that triggers navigation to /orbit
+  function renderOrbitButton() {
+    const container = document.getElementById('orbit-btn-container');
+    if (!container) return;
+    
+    // Only show if asteroid exists and has orbital elements
+    if (!hasAsteroid || !currentAsteroidData) {
+      container.innerHTML = '';
+      return;
+    }
+    
+    // Build orbit parameters from current asteroid data (used for 3D visualization endpoint)
+    // We're sending key orbital parameters as query string to /orbit so a Flask route can render a Three.js view.
+    // This matches the "link to /orbit" requirement. The button triggers navigation with current NEO context.
+    
+    // Build query params for orbit visualization
+
+    const orbitUrl = `/orbit`;
+    
+    container.innerHTML = `
+      <button class="orbit-action-btn" id="launch-orbit-btn" onclick="window.open('${orbitUrl}', '_blank', 'noopener,noreferrer')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" fill="none"/>
+          <path d="M2 12h4M12 2v4M12 18v4M22 12h-4M18 6l-3 3M9 9L6 6M18 18l-3-3M9 15l-3 3" stroke="currentColor" stroke-linecap="round"/>
+          <ellipse cx="12" cy="12" rx="4" ry="2" stroke="currentColor" fill="none" stroke-dasharray="2 2"/>
+        </svg>
+        ✦ ORBIT 3D VISUALIZATION ✦
+      </button>
+    `;
+  }
+  
+  // Generate asteroid (mock or real API endpoint)
+  async function generateAsteroid() {
+    const btn = document.getElementById('gen-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> &nbsp; Simulating…';
+
+    try {
+      const res = await fetch('/api/generate', { method: 'POST' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      
+      // store asteroid data globally
+      currentAsteroidData = {
+        ...data,
+        hazardous: (data.hazardous == 1 || data.hazardous === true),
+        confidence: data.confidence || 0.92
+      };
+      hasAsteroid = true;
+      
+      renderAsteroid(currentAsteroidData);
+      renderOrbitButton();      // Show the "Orbit 3D" button now
+      
+      // Update context pill in chat
+      const pill = document.getElementById('ctx-pill');
+      const ctxText = document.getElementById('ctx-text');
+      if (pill && ctxText) {
+        ctxText.textContent = `Context: NEO loaded — ${currentAsteroidData.hazardous ? 'HAZARDOUS' : 'SAFE'}`;
+        pill.classList.add('visible');
+      }
+    } catch (err) {
+      document.getElementById('gen-content').innerHTML =
+        `<div style="color:var(--red);font-size:0.7rem;padding:10px;">Error: ${err.message}</div>`;
+      hasAsteroid = false;
+      currentAsteroidData = null;
+      renderOrbitButton(); // hide button
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '⟳ &nbsp; Generate &amp; Classify NEO';
+  }
+
+  function renderAsteroid(d) {
+    const isHaz = d.hazardous === true || d.hazardous === 1;
+    const confPct = Math.round((d.confidence || 0.5) * 100);
+
+    const fields = [
+      { label: 'Semi-Major Axis',  value: d.Semi_Major_Axis,      unit: 'AU' },
+      { label: 'Eccentricity',     value: d.Eccentricity,         unit: '' },
+      { label: 'Inclination',      value: d.Inclination,          unit: '°' },
+      { label: 'Miss Distance',    value: d.Miss_Dist_Kilometers,  unit: 'km' },
+      { label: 'Orbital Period',   value: d.Orbital_Period,        unit: 'days' },
+      { label: 'Perihelion Dist',  value: d.Perihelion_Distance,   unit: 'AU' },
+      { label: 'Aphelion Dist',    value: d.Aphelion_Distance,     unit: 'AU' },
+      { label: 'Min Orbit Intersect', value: d.Minimum_Orbit_Intersection, unit: 'AU' },
+    ].filter(f => f.value !== undefined && f.value !== null);
+
+    const cells = fields.map(f => `
+      <div class="data-cell">
+        <div class="cell-label">${f.label}</div>
+        <div class="cell-value">${parseFloat(f.value).toFixed(5)}<span class="cell-unit">${f.unit}</span></div>
+      </div>
+    `).join('');
+
+    const report = d.report || '';
+
+    document.getElementById('gen-content').innerHTML = `
+      <div class="hazard-badge ${isHaz ? 'hazardous' : 'safe'}">
+        <div class="badge-icon">${isHaz ? '⚠' : '✓'}</div>
+        <div>
+          <div class="badge-label">Classification</div>
+          <div class="badge-value">${isHaz ? 'Potentially Hazardous' : 'Non-Hazardous'}</div>
+          <div class="confidence-bar" style="margin-top:6px;width:180px;">
+            <div class="confidence-fill" style="width:${confPct}%"></div>
+          </div>
+          <div style="font-size:0.58rem;color:var(--text-dim);margin-top:3px;">${confPct}% confidence</div>
+        </div>
+      </div>
+
+      <div class="data-grid">${cells}</div>
+
+      ${report ? `
+        <div class="report-block">
+          <div class="report-label">GPT-2 Scientific Summary</div>
+          ${escHtml(report)}
+        </div>
+      ` : ''}
+    `;
+  }
+
+  // ── Chat helpers ──────────────────────────────────────────────────────────
+  const messagesEl = document.getElementById('messages');
+  const sendBtn    = document.getElementById('send-btn');
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function appendMsg(role, html) {
+    const empty = document.getElementById('chat-empty');
+    if (empty && empty.parentNode) empty.remove();
+
+    const div = document.createElement('div');
+    div.className = `msg ${role}`;
+    const av = role === 'user'
+      ? '<div class="avatar">YOU</div>'
+      : '<div class="avatar">NEO</div>';
+    div.innerHTML = `${av}<div class="bubble">${html}</div>`;
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return div;
+  }
+
+  function appendTyping() {
+    return appendMsg('bot', '<div class="dots"><span></span><span></span><span></span></div>');
+  }
+
+  function renderSources(sources) {
+    if (!sources?.length) return '';
+    const id = 'src-' + Date.now();
+    const items = sources.map((s, i) =>
+      `<div class="src-item">[${i+1}] chunk_${s.chunk_index} · dist ${s.distance} — ${escHtml((s.preview||'').slice(0,100))}…</div>`
+    ).join('');
+    return `
+      <div class="src-toggle" onclick="this.nextElementSibling.classList.toggle('open')">
+        ⬡ ${sources.length} sources
+      </div>
+      <div class="src-list">${items}</div>`;
+  }
+
+  function chipSend(el) {
+    questionEl.value = el.textContent;
+    sendMessage();
+  }
+
+  async function sendMessage() {
+    const q = questionEl.value.trim();
+    if (!q) return;
+
+    sendBtn.disabled = true;
+    questionEl.value = '';
+    questionEl.style.height = 'auto';
+
+    appendMsg('user', escHtml(q));
+    const typing = appendTyping();
+
+    try {
+      const res = await fetch('/api/rag', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: q }),
+      });
+      const data = await res.json();
+      typing.remove();
+
+      if (data.error) {
+        appendMsg('bot', `<span style="color:var(--red)">⚠ ${escHtml(data.error)}</span>`);
+      } else {
+        const html = escHtml(data.answer).replace(/\n/g,'<br>') + renderSources(data.sources);
+        appendMsg('bot', html);
+      }
+    } catch (err) {
+      typing.remove();
+      appendMsg('bot', `<span style="color:var(--red)">⚠ Network error</span>`);
+    }
+
+    sendBtn.disabled = false;
+    questionEl.focus();
+  }
+  
+  // If initial data provided by Flask (server-side render)
+  window.addEventListener('DOMContentLoaded', () => {
+    const dataScript = document.getElementById('asteroid-data');
+    if (dataScript) {
+      try {
+        const data = JSON.parse(dataScript.textContent);
+        currentAsteroidData = {
+          ...data,
+          hazardous: (data.hazardous == 1 || data.hazardous === true),
+          confidence: data.confidence || 0.85
+        };
+        hasAsteroid = true;
+        renderAsteroid(currentAsteroidData);
+        renderOrbitButton();   // show Orbit button if data preloaded
+        const pill = document.getElementById('ctx-pill');
+        const ctxText = document.getElementById('ctx-text');
+        if (pill && ctxText) {
+          ctxText.textContent = `Context: NEO loaded — ${currentAsteroidData.hazardous ? 'HAZARDOUS' : 'SAFE'}`;
+          pill.classList.add('visible');
+        }
+      } catch(e) { console.warn(e); }
+    }
+  });
+</script>
+
+<!-- Hidden data bridge for Flask rendering (optional) -->
+{% if submitted %}
+<script id="asteroid-data" type="application/json">
+{
+  {% for key, val in asteroid.items() %}
+  "{{ key }}": {{ val }},
+  {% endfor %}
+  "hazardous": {{ prediction }},
+  "confidence": {{ confidence[prediction] }},
+  "report": {{ report | tojson }}
 }
-    </script>
-    <script>
-        document.querySelector("form").addEventListener("submit", function () {
-            document.getElementById("loader").style.display = "flex";
-        });
-    </script>
-
+</script>
+{% endif %}
 
 </body>
-
 </html>
