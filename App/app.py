@@ -7,8 +7,6 @@ import random
 import json
 import random
 from pathlib import Path
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
-import torch
 import os
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "RAG"))
@@ -59,8 +57,8 @@ def save_asteroid_to_db(asteroid, hazardous):
 # Load model
 model_folder = Path(__file__).parent.parent / 'ML Models' / 'NLP Model'
 
-model = GPT2LMHeadModel.from_pretrained(str(model_folder))
-tokenizer = GPT2Tokenizer.from_pretrained(str(model_folder))
+#model = GPT2LMHeadModel.from_pretrained(str(model_folder))
+#tokenizer = GPT2Tokenizer.from_pretrained(str(model_folder))
 
 # def generate_report(asteroid):
 #     prompt = (
