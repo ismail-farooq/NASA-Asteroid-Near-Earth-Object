@@ -13,9 +13,21 @@ from huggingface_hub import hf_hub_download
 app = Flask(__name__)
 app.secret_key = 'KEY' 
 
+os.environ["HOME"] = "/tmp"
 os.environ["HF_HOME"] = "/tmp/hf"
 os.environ["HUGGINGFACE_HUB_CACHE"] = "/tmp/hf"
 os.environ["TRANSFORMERS_CACHE"] = "/tmp/hf"
+os.environ["SENTENCE_TRANSFORMERS_HOME"] = "/tmp/hf"
+os.environ["TORCH_HOME"] = "/tmp/torch"
+
+os.makedirs("/tmp/hf", exist_ok=True)
+os.makedirs("/tmp/torch", exist_ok=True)
+
+# Global variables for lazy loading
+hazard_model = None
+scaler = None
+_models_loaded = False
+
 def load_model1():
     return hf_hub_download(
         repo_id="HollowWinter429/hazard_model",
@@ -30,14 +42,31 @@ def load_model2():
         cache_dir="/tmp/hf"
     )
 
-hazard_path = load_model1()
-scaler_path = load_model2()
+def load_models():
+    """Lazy load models when first needed"""
+    global hazard_model, scaler, _models_loaded
 
-hazard_model = joblib.load(hazard_path)
-scaler = joblib.load(scaler_path)
+    if _models_loaded:
+        return
 
-# DB_PATH1 = Path(__file__).parent.parent / 'Database' 
-# DB_PATH = DB_PATH1 / 'asteroids.db'
+    hazard_path = load_model1()
+    scaler_path = load_model2()
+
+    hazard_model = joblib.load(hazard_path)
+    scaler = joblib.load(scaler_path)
+
+    _models_loaded = True
+
+rag_pipeline = None
+_rag_loaded = False
+def load_rag():
+    global rag_pipeline, _rag_loaded
+
+    if _rag_loaded:
+        return
+
+    rag_pipeline = get_pipeline()
+    _rag_loaded = True
 
 
 def load_feature_ranges():
@@ -62,11 +91,13 @@ def load_feature_ranges():
         "Mean_Anomaly": [0.0031914911023824, 0.0031914911023824],
         "Mean_Motion": [0.1638053948608621, 0.1638053948608621]
     }
+
 ranges = load_feature_ranges()
 
 def generate_random_asteroid(ranges):
     return {col: round(random.uniform(min_val, max_val), 5) for col, (min_val, max_val) in ranges.items()}
 
+# DB functions commented out
 # def save_asteroid_to_db(asteroid, hazardous):
 #     conn = sqlite3.connect(DB_PATH)
 #     c = conn.cursor()
@@ -77,33 +108,12 @@ def generate_random_asteroid(ranges):
 #     conn.commit()
 #     conn.close()
 
-# Load model
-#model = GPT2LMHeadModel.from_pretrained(str(model_folder))
-#tokenizer = GPT2Tokenizer.from_pretrained(str(model_folder))
-
-# def generate_report(asteroid):
-#     prompt = (
-#         f"NEO report:\n"
-#         f"Semi-Major Axis: {asteroid['Semi_Major_Axis']} AU, "
-#         f"Eccentricity: {asteroid['Eccentricity']}, "
-#         f"Inclination: {asteroid['Inclination']} degrees, "
-#         f"Close Approach Distance: {asteroid['Miss_Dist_Kilometers']} km, "
-#         f"Hazardous: {asteroid['Hazardous']}.\n\n"
-#         "Scientific Summary:"
-#     )
-
-#     inputs = tokenizer.encode(prompt, return_tensors="pt")
-#     output = model.generate(
-#         inputs,
-#         max_length=250,
-#         temperature=0.7,
-#         no_repeat_ngram_size=3
-#     )
-#     return tokenizer.decode(output[0], skip_special_tokens=True)
-
-
 @app.route("/", methods=["GET", "POST"])
 def index():
+    # Load models if this is a POST request (warm start)
+    if request.method == "POST":
+        load_models()
+    
     if request.method == "POST":
         # Generate random asteroid
         ranges = load_feature_ranges()
@@ -118,8 +128,6 @@ def index():
         asteroid_json = json.dumps(asteroid)
         session['current_asteroid'] = asteroid
 
-        # save_asteroid_to_db(asteroid, prediction)
-        #report = generate_report(asteroid)
         return render_template("index.html", asteroid=asteroid, prediction=prediction, asteroid_json=asteroid_json, confidence=confidence, submitted=True)
 
     return render_template("index.html", submitted=False)
@@ -130,18 +138,18 @@ def orbit():
 
 @app.route('/api/asteroid')
 def api_asteroid():
-    if 'current_asteroid' in session:
-        asteroid = session['current_asteroid']
-    
+    asteroid = session.get('current_asteroid')
+
+    if not asteroid:
+        return jsonify({"error": "No asteroid found"}), 404
+
     return jsonify(asteroid)
 
 @app.route("/chat")
 def chat():
     """Renders the RAG chat UI."""
     return render_template("chat.html")
- 
- 
-# ── Route: RAG API endpoint (called by chat.html via fetch) ───────────────────
+
 @app.route("/api/rag", methods=["POST"])
 def rag_query():
     """
@@ -165,7 +173,8 @@ def rag_query():
     asteroid_context = session.get("current_asteroid")
  
     try:
-        pipeline = get_pipeline()
+        load_rag()
+        pipeline = rag_pipeline
         result   = pipeline.ask(question, asteroid_context=asteroid_context)
         return jsonify(result)
     except FileNotFoundError as e:
@@ -179,6 +188,9 @@ def api_generate():
     Returns JSON with asteroid data, prediction, confidence, and report.
     Called by the frontend JS instead of POSTing to '/'.
     """
+    # Load models for this request
+    load_models()
+    
     ranges = load_feature_ranges()
     asteroid = generate_random_asteroid(ranges)
     df = pd.DataFrame([asteroid])
@@ -189,15 +201,12 @@ def api_generate():
     asteroid['Hazardous'] = prediction
     session['current_asteroid'] = asteroid
  
-    # save_asteroid_to_db(asteroid, prediction)
-    #report = generate_report(asteroid)
- 
     return jsonify({
         **asteroid,
         "prediction": prediction,
         "confidence": confidence[prediction],
     })
- 
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
