@@ -17,10 +17,6 @@ app = Flask(__name__)
 app.secret_key = 'KEY' 
 
 
-MODEL_PATH = Path(__file__).parent.parent / 'ML Models' 
-DB_PATH1 = Path(__file__).parent.parent / 'Database' 
-
-
 model_path = hf_hub_download(
     repo_id="HollowWinter429/hazard_model",
     filename="hazard_model.pkl"
@@ -38,8 +34,6 @@ scaler_path = hf_hub_download(MODEL_REPO, "scaler.pkl")
 
 hazard_model = joblib.load(hazard_path)
 scaler = joblib.load(scaler_path)
-
-DB_PATH = DB_PATH1 / 'asteroids.db'
 
 DB_PATH1 = Path(__file__).parent.parent / 'Database' 
 DB_PATH = DB_PATH1 / 'asteroids.db'
@@ -69,8 +63,6 @@ def save_asteroid_to_db(asteroid, hazardous):
     conn.close()
 
 # Load model
-model_folder = Path(__file__).parent.parent / 'ML Models' / 'NLP Model'
-
 #model = GPT2LMHeadModel.from_pretrained(str(model_folder))
 #tokenizer = GPT2Tokenizer.from_pretrained(str(model_folder))
 
