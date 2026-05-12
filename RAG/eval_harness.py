@@ -17,9 +17,13 @@ import json
 import argparse
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
-
+from dotenv import load_dotenv
 from groq import Groq
 from rag_pipeline import get_pipeline
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
 
 # ── Test suite ─────────────────────────────────────────────────────────────────
 TEST_CASES = [

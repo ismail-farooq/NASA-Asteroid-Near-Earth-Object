@@ -14,12 +14,15 @@ wants the RAG answer to be grounded in the current session's asteroid data
 import os
 import json
 from pathlib import Path
-
+from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 from retriever import AsteroidRetriever
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 LLM_MODEL = "llama-3.3-70b-versatile"   # free on Groq, very capable
@@ -51,12 +54,12 @@ def _format_asteroid_section(asteroid: dict | None) -> str:
 
 class RAGPipeline:
     def __init__(self, api_key: str | None = None):
-        api_key = os.getenv("GROQ_API_KEY")
+        api_key = os.getenv("GROQ_API_KEY") 
         if not api_key:
             raise EnvironmentError("GROQ_API_KEY not set.")
 
         self.retriever = AsteroidRetriever()
-        self.llm       = ChatGroq(model=LLM_MODEL, temperature=0.3, groq_api_key=key)
+        self.llm       = ChatGroq(model=LLM_MODEL, temperature=0.3, groq_api_key=api_key)
         self.parser    = StrOutputParser()
 
         self.prompt = ChatPromptTemplate.from_messages([
